@@ -1,0 +1,20 @@
+
+<launch>
+  <group ns="/simple_model">
+  <!-- loads the controller-->
+  <rosparam file="$(find dec_control)/config/mars_config.yaml" command="load" />
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" args="/joint_state_controller  base_to_wheel1_Joint_position_controller  --shutdown-timeout 3"/>
+
+<!-- converts jointstate to tf transform -->
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">  
+  <remap from="/joint_states" to="/simple_model/joint_states"/>
+  </node>
+
+
+</group>
+
+
+
+
+</launch>

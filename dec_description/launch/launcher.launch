@@ -1,0 +1,65 @@
+<launch>
+<!-- Launch gazebo -->
+<!-- these are the arguments you can pass this launch file, for example paused:=true -->
+<arg name="paused" default="true"/>
+<arg name="use_sim_time" default="true"/>
+<arg name="gui" default="true"/>
+<arg name="headless" default="false"/>
+<arg name="debug" default="false"/>
+<arg name="model" default="$(find dec_description)/MARS.xacro"/>
+<!-- We resume the logic in empty_world.launch -->
+
+<include file="$(find gazebo_ros)/launch/empty_world.launch">
+<arg name="debug" value="$(arg debug)" />
+<arg name="gui" value="$(arg gui)" />
+<arg name="paused" value="$(arg paused)"/>
+<arg name="use_sim_time" value="$(arg use_sim_time)"/>
+<arg name="headless" value="$(arg headless)"/>
+</include>
+
+<!-- Load the URDF into the ROS Parameter Server -->
+
+<!--<param name="robot_description" command="$(find xacro)/xacro.py $(arg model)"/> -->
+
+<param name="robot_description"
+    command="$(find xacro)/xacro --inorder '$(find dec_description)/urdf/MARS.xacro'" />
+<!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+
+<node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+  args="-z 1.0 -urdf -model complete_M.A.R.S_prototype2 -param robot_description"/>
+ 
+
+ <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find dec_description)/urdf.rviz" required="true" />
+  -->
+  <node name="rviz" pkg="rviz" type="rviz"/>
+
+<!-- <arg name="model" default="$(find dec_description)/urdf/MARS.xacro"/> -->
+<!--<arg name="rvizconfig" default="$(find dec_description)/urdf.rviz"/>
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)"/>
+
+ Load joint controller configuration from YAML file to parameter server --> 
+
+<rosparam file="$(find dec_control)/config/mars.yaml" command="load"/>
+
+<rosparam file="$(find dec_control)/config/mars1.yaml" command="load"/>
+
+
+<!-- load the controllers -->
+<node name="robot_arm_controller_spawner" pkg="controller_manager" type="spawner"
+  respawn="true" output="screen" 
+   args="/Diff_Drive/joint_state_controller
+         /Diff_Drive/diff_drive_controller
+        --shutdown-timeout 3"/>
+
+<!-- convert joint states to TF transforms for rviz, etc -->
+<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+    respawn="false" output="screen">
+</node>
+
+<node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">
+  <param name="default_topic" value="/Diff_Drive/diff_drive_controller/cmd_vel"/> 
+</node>
+
+
+
+</launch>

@@ -1,0 +1,30 @@
+
+<launch>
+  <!-- loads the controller-->
+ <arg name="model" default="$(find dec_description)/urdf/MARS_CHASSIS.xacro"/>
+ <param name="robot_description"
+    command="$(find xacro)/xacro --inorder '$(find dec_description)/urdf/MARS_CHASSIS.xacro'" />
+<!--
+  <arg name="rvizconfig" default="$(find urdf_tutorial)/rviz/urdf.rviz" />
+-->
+
+<node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+    args="-urdf -model complete_M.A.R.S_prototype2 -param robot_description"/>
+
+<rosparam file="$(find dec_control)/config/mars_config5.yaml" command="load"/>
+
+
+
+<node name="controller_spawner" pkg="controller_manager" type="spawner"  respawn="false" output="screen" args=" joint_state_controller robotc"/>
+
+<!-- converts jointstate to tf transform -->
+
+
+
+
+
+
+
+
+
+</launch>

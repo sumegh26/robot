@@ -1,0 +1,18 @@
+
+<launch>
+  <!-- loads the controller-->
+<rosparam file="$(find dec_control)/config/mars_config2.yaml" command="load" />
+
+
+<node name="controller_spawner" pkg="controller_manager" type="spawner"  args="/diff_drive --shutdown-timeout 3"/>
+
+<!-- converts jointstate to tf transform -->
+
+<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+<remap from="/diff_drive" to="/simple_model/joint_states"/>
+</node>
+
+  <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">
+    <param name="default_topic" value="/diff_drive/cmd_vel"/>
+</node>
+</launch>

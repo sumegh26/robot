@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<robot>
+
+<gazebo>
+  <plugin name="skid_steer_drive_controller" filename="libgazebo_ros_skid_steer_drive.so">
+    <updateRate>100.0</updateRate>
+    <robotNamespace>four</robotNamespace>
+    <leftFrontJoint>chassis_to_wheel1</leftFrontJoint>
+    <rightFrontJoint>chassis_to_wheel2</rightFrontJoint>cd
+    <leftRearJoint>chassis_to_wheel3</leftRearJoint>
+    <rightRearJoint>chassis_to_wheel4</rightRearJoint>
+    <wheelSeparation>0.6</wheelSeparation>
+    <wheelDiameter>0.15</wheelDiameter>
+    <robotBaseFrame>chassis</robotBaseFrame>
+    <torque>20</torque> 
+    <broadcastTF>true</broadcastTF>
+  </plugin>
+
+</gazebo>
+<gazebo>
+ <plugin name="camera_plugin" filename="libgazebo_ros_openni_kinect.so">
+          <baseline>0.2</baseline>
+          <alwaysOn>true</alwaysOn>
+          <!-- Keep this zero, update_rate in the parent <sensor> tag
+            will control the frame rate. -->
+          <updateRate>0.0</updateRate>
+          <cameraName>camera_ir</cameraName>
+          <imageTopicName>/camera/depth/image_raw</imageTopicName>
+          <cameraInfoTopicName>/camera/depth/camera_info</cameraInfoTopicName>
+          <depthImageTopicName>/camera/depth/image_raw</depthImageTopicName>
+          <depthImageInfoTopicName>/camera/depth/camera_info</depthImageInfoTopicName>
+          <pointCloudTopicName>/camera/depth/points</pointCloudTopicName>
+          <frameName>camera_link</frameName>
+          <pointCloudCutoff>0.05</pointCloudCutoff>
+          <distortionK1>0</distortionK1>
+          <distortionK2>0</distortionK2>
+          <distortionK3>0</distortionK3>
+          <distortionT1>0</distortionT1>
+          <distortionT2>0</distortionT2>
+          <CxPrime>0</CxPrime>
+          <Cx>0</Cx>
+          <Cy>0</Cy>
+          <focalLength>0</focalLength>
+          <hackBaseline>0</hackBaseline>
+        </plugin>
+
+
+        </gazebo>
+
+        </robot>

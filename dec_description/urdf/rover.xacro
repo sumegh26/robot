@@ -1,0 +1,712 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="r2d2">
+<!--Author name :- Ajit Mutalik, 
+email :- ajit.mutalik301997@gmail.com,
+Team Members - Ajit Mutalik (15ET2013)
+               Vineet Menon (15ET1035)
+               Chaitanya Nakhare (15ET2016)
+Final year B.E. project,
+Guides - Prof. Kavi Arya (External Guide)
+       - Mrs. Sanjivani Chakote (Internal Guide) -->
+
+
+    <!--Defining colours to be used in this rover links for primitives-->
+    <material name="Black">
+        <color rgba="0.0 0.0 0.0 1.0"/>
+    </material>
+
+    <material name="Red">
+        <color rgba="0.8 0.0 0.0 1.0"/>
+    </material>
+
+    <material name="White">
+        <color rgba="1.0 1.0 1.0 1.0"/>
+    </material>
+
+    <material name="Blue">
+        <color rgba="0.0 0.0 0.8 1.0"/>
+    </material>
+
+  <!--Property List-->
+  <!--All units in m-kg-s-radians unit system please remember this while developing the inertia matrix and the body dimensions-->
+
+  <!--Constant Values-->
+  <xacro:property name="M_PI" value="3.1415926535897931"/>
+  <xacro:property name="DEG_TO_RAD" value="0.017453293"/>
+
+  <!-- Main Body Cuboid which is made of black color aluminum dimensions -->
+  <xacro:property name="box_length" value="0.37"/>
+  <xacro:property name="box_width" value="0.34"/>
+  <xacro:property name="box_height" value="0.23"/>
+  <xacro:property name="box_mass" value="5"/> <!-- This value is in Kg's -->
+
+  <!-- Cuboid part of the holder which is red color steel connecting the wheels, motors to main body -->
+  <xacro:property name="holder_length" value="0.0928"/>
+  <xacro:property name="holder_width" value="0.02404"/>
+  <xacro:property name="holder_height" value="0.00452"/>
+  <xacro:property name="holder_mass" value="0.2"/> <!-- This value is in Kg's -->
+
+  <!-- Wheels (off road) -->
+
+  <xacro:property name="wheel_mass" value="0.05" /> --> <!-- in kg-->
+  <xacro:property name="wheel_radius" value="0.06"/>
+  <xacro:property name="wheel_height" value="0.06"/>
+
+  <!-- Motor Dimensions with holder2 added to it -->
+  
+  <xacro:property name="motor_mass" value="0.2" /> --> <!-- in kg-->
+  <xacro:property name="motor_radius" value="0.037"/>
+  <xacro:property name="motor_height" value="0.067"/>
+
+  <!-- #################### versions with origin #################### -->
+  <xacro:macro name="sphere_inertial_with_origin" params="radius mass x_o y_o z_o r_o p_o yr_o">
+    <inertial>
+      <mass value="${mass}" />
+      <origin rpy="${r_o} ${p_o} ${yr_o}" xyz="${x_o} ${y_o} ${z_o}" />
+      <inertia ixx="${0.4 * mass * radius * radius}" ixy="0.0" ixz="0.0"
+        iyy="${0.4 * mass * radius * radius}" iyz="0.0"
+        izz="${0.4 * mass * radius * radius}" />
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="cylinder_inertial_with_origin" params="radius length mass x_o y_o z_o r_o p_o yr_o">
+    <inertial>
+      <mass value="${mass}" />
+      <origin rpy="${r_o} ${p_o} ${yr_o}" xyz="${x_o} ${y_o} ${z_o}" />
+      <inertia ixx="${0.0833333 * mass * (3 * radius * radius + length * length)}" ixy="0.0" ixz="0.0"
+        iyy="${0.0833333 * mass * (3 * radius * radius + length * length)}" iyz="0.0"
+        izz="${0.5 * mass * radius * radius}" />
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="box_inertial_with_origin" params="x y z mass x_o y_o z_o r_o p_o yr_o">
+    <inertial>
+      <mass value="${mass}" />
+      <origin rpy="${r_o} ${p_o} ${yr_o}" xyz="${x_o} ${y_o} ${z_o}" />
+      <inertia ixx="${0.0833333 * mass * (y*y + z*z)}" ixy="0.0" ixz="0.0"
+        iyy="${0.0833333 * mass * (x*x + z*z)}" iyz="0.0"
+        izz="${0.0833333 * mass * (x*x + y*y)}" />
+    </inertial>
+  </xacro:macro>
+
+
+  <!--Base Link-->
+  <link name="base_link">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <box size=" ${box_length} ${box_width} ${box_height}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <box size="${box_length} ${box_width} ${box_height}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:box_inertial_with_origin x="${box_length}" y="${box_width}" z="${box_height}" mass="5" x_o="0" y_o="0" z_o="0" r_o="0" p_o="0" yr_o="0"/>
+  </link>
+
+  <!-- Joint link between 
+      Parent Link :- base_link
+      Child Link :- rr_holder
+      
+      This link has limits in the angular rotation of 15 deg counter clockwise direction, so this joint will be a revolute type of joint.
+   -->
+
+  <joint name="RR_holder_to_base_link" type="revolute">
+      <parent link="base_link"/>
+      <child link="rr_holder"/>
+      <origin xyz="-0.175 -0.17 -0.125" rpy="0 0 0"/>
+      <axis xyz="0 1 0" />
+      <limit effort="300" velocity="0.1" lower="0" upper="0.261799" />
+  </joint>
+
+   <!--Right Rear holder Link-->
+  <link name="rr_holder">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 -0.785398 0" xyz="-0.0415 0 -0.024"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <box size="${holder_length} ${holder_width} ${holder_height} "/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 -0.785398 0" xyz="-0.0415 0 -0.024"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <box size="${holder_length} ${holder_width} ${holder_height }"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:box_inertial_with_origin x="${holder_length}" y="${holder_width}" z="${holder_height}" mass="0.2" x_o="-0.039" y_o="0" z_o="0" r_o="1.5708" p_o="0" yr_o="0"/>
+  </link>
+
+
+   <!-- Joint link between 
+      Parent Link :- base_link
+      Child Link :- rr_holder
+      
+      This link has limits in the angular rotation of 15 deg counter clockwise direction, so this joint will be a revolute type of joint.
+   -->
+
+  <joint name="RF_holder_to_base_link" type="revolute">
+      <parent link="base_link"/>
+      <child link="rf_holder"/>
+      <origin xyz="0.175 -0.17 -0.125" rpy="0 0 0"/>
+      <axis xyz="0 1 0" />
+      <limit effort="300" velocity="0.1" lower="0" upper="-0.261799" />
+  </joint>
+
+   <!--Right Forward holder Link-->
+  <link name="rf_holder">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 0.785398 0" xyz="0.0415 0 -0.024"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <box size="${holder_length} ${holder_width} ${holder_height}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 0.785398 0" xyz="0.0415 0 -0.024"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <box size="${holder_length} ${holder_width} ${holder_height}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:box_inertial_with_origin x="${holder_length}" y="${holder_width}" z="${holder_height}" mass="0.2" x_o="0.039" y_o="0" z_o="0" r_o="1.5708" p_o="0" yr_o="0"/>
+  </link>
+
+
+
+  <!-- Joint link between 
+      Parent Link :- base_link
+      Child Link :- lr_holder
+      
+      This link has limits in the angular rotation of 15 deg counter clockwise direction, so this joint will be a revolute type of joint.
+   -->
+
+  <joint name="LR_holder_to_base_link" type="revolute">
+      <parent link="base_link"/>
+      <child link="lr_holder"/>
+      <origin xyz="-0.175 0.17 -0.125" rpy="0 0 0"/>
+      <axis xyz="0 1 0" />
+      <limit effort="300" velocity="0.1" lower="0" upper="0.261799" />
+  </joint>
+
+   <!--Right Rear holder Link-->
+  <link name="lr_holder">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 -0.785398 0" xyz="-0.0415 0 -0.024"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <box size="${holder_length} ${holder_width} ${holder_height} "/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>0.785398
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 -0.785398 0" xyz="-0.0415 0 -0.024"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <box size="${holder_length} ${holder_width} ${holder_height}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:box_inertial_with_origin x="${holder_length}" y="${holder_width}" z="${holder_height}" mass="0.2" x_o="-0.039" y_o="0" z_o="0" r_o="1.5708" p_o="0" yr_o="0"/>
+  </link>
+
+
+<!-- Joint link between 
+      Parent Link :- base_link
+      Child Link :- lf_holder
+      
+      This link has limits in the angular rotation of 15 deg counter clockwise direction, so this joint will be a revolute type of joint.
+   -->
+
+  <joint name="LF_holder_to_base_link" type="revolute">
+      <parent link="base_link"/>
+      <child link="lf_holder"/>
+      <origin xyz="0.175 0.17 -0.125" rpy="0 0 0"/>
+      <axis xyz="0 1 0" />
+      <limit effort="300" velocity="0.1" lower="0" upper="-0.261799" />
+  </joint>
+
+   <!--Left Forward holder Link-->
+  <link name="lf_holder">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 0.785398 0" xyz="0.0415 0 -0.024"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <box size="${holder_length} ${holder_width} ${holder_height}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 0.785398 0" xyz="0.0415 0 -0.024"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <box size="${holder_length} ${holder_width} ${holder_height}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:box_inertial_with_origin x="${holder_length}" y="${holder_width}" z="${holder_height}" mass="0.2" x_o="0.039" y_o="0" z_o="0" r_o="1.5708" p_o="0" yr_o="0"/>
+  </link>
+
+  
+  
+ 
+
+ 
+  
+  <!-- Joint link between 
+      Parent Link :- rr_holder
+      Child Link :- motor_rr
+      
+      This joint would be a fixed joint.
+   -->
+  <joint name="RR_motor_to_holder_link" type="fixed">
+      <parent link="rr_holder"/>
+      <child link="motor_rr"/>
+      <origin xyz="-0.062 0 -0.062" rpy="0 0 0"/>
+  </joint>
+
+   <!--Left Forward motor + holder2  Link-->
+  <link name="motor_rr">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 0 0" xyz="${-motor_radius + 0.005} 0.035 ${-motor_radius + 0.01}"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <cylinder length="${motor_height}" radius="${motor_radius}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 0 0" xyz="${-motor_radius + 0.005} 0.035 ${-motor_radius + 0.01}"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <cylinder length="${motor_height}" radius="${motor_radius}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:cylinder_inertial_with_origin radius="${motor_radius}" length="${motor_height}" mass="${motor_mass}" x_o="0" y_o="0" z_o="0" r_o="0" p_o="0" yr_o="0" />
+  </link>
+
+
+<!-- Joint link between 
+      Parent Link :- rf_holder
+      Child Link :- motor_rf
+      
+      This joint would be a fixed joint.
+   -->
+  <joint name="RF_motor_to_holder_link" type="fixed">
+      <parent link="rf_holder"/>
+      <child link="motor_rf"/>
+      <origin xyz="0.062 0 -0.062" rpy="0 0 0"/>
+  </joint>
+
+   <!--Right Forward motor + holder2  Link-->
+  <link name="motor_rf">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 0 0" xyz="${motor_radius - 0.005} 0.035 ${-motor_radius + 0.01}"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <cylinder length="${motor_height}" radius="${motor_radius}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="1.5708 0 0" xyz="${motor_radius - 0.005} 0.035 ${-motor_radius + 0.01}"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <cylinder length="${motor_height}" radius="${motor_radius}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:cylinder_inertial_with_origin radius="${motor_radius}" length="${motor_height}" mass="${motor_mass}" x_o="0" y_o="0" z_o="0" r_o="0" p_o="0" yr_o="0" />
+  </link>
+
+
+  <!-- Joint link between 
+      Parent Link :- lr_holder
+      Child Link :- motor_lf
+      
+      This joint would be a fixed joint.
+   -->
+  <joint name="LR_motor_to_holder_link" type="fixed">
+      <parent link="lr_holder"/>
+      <child link="motor_lr"/>
+      <origin xyz="-0.062 0 -0.062" rpy="0 0 0"/>
+  </joint>
+
+   <!--Left Forward motor + holder2  Link-->
+  <link name="motor_lr">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="-1.5708 0 0" xyz="${-motor_radius + 0.005} -0.035 ${-motor_radius + 0.01}"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <cylinder length="${motor_height}" radius="${motor_radius}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="-1.5708 0 0" xyz="${-motor_radius + 0.005} -0.035 ${-motor_radius + 0.01}"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <cylinder length="${motor_height}" radius="${motor_radius}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:cylinder_inertial_with_origin radius="${motor_radius}" length="${motor_height}" mass="${motor_mass}" x_o="0" y_o="0" z_o="0" r_o="0" p_o="0" yr_o="0" />
+  </link>
+
+
+ <!-- Joint link between 
+      Parent Link :- lf_holder
+      Child Link :- motor_lf
+      
+      This joint would be a fixed joint.
+   -->
+  <joint name="LF_motor_to_holder_link" type="fixed">
+      <parent link="lf_holder"/>
+      <child link="motor_lf"/>
+      <origin xyz="0.062 0 -0.062" rpy="0 0 0"/>
+  </joint>
+
+   <!--Left Forward motor + holder2  Link-->
+  <link name="motor_lf">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="-1.5708 0 0" xyz="${motor_radius - 0.005} -0.035 ${-motor_radius + 0.01}"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <cylinder length="${motor_height}" radius="${motor_radius}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="-1.5708 0 0" xyz="${motor_radius - 0.005} -0.035 ${-motor_radius + 0.01}"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <cylinder length="${motor_height}" radius="${motor_radius}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:cylinder_inertial_with_origin radius="${motor_radius}" length="${motor_height}" mass="${motor_mass}" x_o="0" y_o="0" z_o="0" r_o="0" p_o="0" yr_o="0" />
+  </link>
+
+
+<!-- Joint link between 
+      Parent Link :- motor_rr
+      Child Link :- rr_wheel
+      
+      This joint would be a continuous joint.
+   -->
+
+  <joint name="RR_motor_to_wheel" type="continuous">
+      <parent link="motor_rr"/>
+      <child link="rr_wheel"/>
+      <origin xyz="${-motor_radius + 0.005} ${-(wheel_height/2) - 0.005} ${-motor_radius + 0.01}" rpy="1.5708 0 0"/>
+      <axis xyz="0 0 1" />  
+      <limit effort="100" velocity="100"/>   
+      <joint_properties damping="0.0" friction="0.0"/> 
+  </joint>
+    
+  <!--Left Forward motor + holder2  Link-->
+  <link name="rr_wheel">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <cylinder length="${wheel_height}" radius="${wheel_radius}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <cylinder length="${wheel_height}" radius="${wheel_radius}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:cylinder_inertial_with_origin radius="${wheel_radius}" length="${wheel_height}" mass="${wheel_mass}" x_o="0" y_o="0" z_o="0" r_o="0" p_o="0" yr_o="0" />
+  </link>
+
+
+  <!-- Joint link between 
+      Parent Link :- motor_rf
+      Child Link :- rf_wheel
+      
+      This joint would be a continuous joint.
+   -->
+
+  <joint name="RF_motor_to_wheel" type="continuous">
+      <parent link="motor_rf"/>
+      <child link="rf_wheel"/>
+      <origin xyz="${motor_radius - 0.005} ${-(wheel_height/2) - 0.005} ${-motor_radius + 0.01}" rpy="1.5708 0 0"/>
+      <axis xyz="0 0 1" />  
+      <limit effort="100" velocity="100"/>   
+      <joint_properties damping="0.0" friction="0.0"/> 
+  </joint>
+    
+  <!--Left Forward motor + holder2  Link-->
+  <link name="rf_wheel">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <cylinder length="${wheel_height}" radius="${wheel_radius}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+           <origin rpy="0 0 0" xyz="0 0 0"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <cylinder length="${wheel_height}" radius="${wheel_radius}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:cylinder_inertial_with_origin radius="${wheel_radius}" length="${wheel_height}" mass="${wheel_mass}" x_o="0" y_o="0" z_o="0" r_o="0" p_o="0" yr_o="0" />
+  </link>
+
+
+   <!-- Joint link between 
+      Parent Link :- motor_lr
+      Child Link :- lr_wheel
+      
+      This joint would be a continuous joint.
+   -->
+
+  <joint name="LR_motor_to_wheel" type="continuous">
+      <parent link="motor_lr"/>
+      <child link="lr_wheel"/>
+      <origin xyz="${-motor_radius + 0.005} ${(wheel_height/2) + 0.005} ${-motor_radius + 0.01}" rpy="-1.5708 0 0"/>
+      <axis xyz="0 0 1" />  
+      <limit effort="100" velocity="100"/>   
+      <joint_properties damping="0.0" friction="0.0"/> 
+  </joint>
+    
+  <!--Left Forward motor + holder2  Link-->
+  <link name="lr_wheel">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <cylinder length="${wheel_height}" radius="${wheel_radius}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <cylinder length="${wheel_height}" radius="${wheel_radius}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:cylinder_inertial_with_origin radius="${wheel_radius}" length="${wheel_height}" mass="${wheel_mass}" x_o="0" y_o="0" z_o="0" r_o="0" p_o="0" yr_o="0" />
+  </link>
+
+
+<!-- Joint link between 
+      Parent Link :- motor_lf
+      Child Link :- lf_wheel
+      
+      This joint would be a continuous joint.
+   -->
+
+  <joint name="LF_motor_to_wheel" type="continuous">
+      <parent link="motor_lf"/>
+      <child link="lf_wheel"/>
+      <origin xyz="${motor_radius - 0.005} ${(wheel_height/2) + 0.005} ${-motor_radius + 0.01}" rpy="-1.5708 0 0"/>
+      <axis xyz="0 0 1" />  
+      <limit effort="100" velocity="100"/>   
+      <joint_properties damping="0.0" friction="0.0"/> 
+  </joint>
+    
+  <!--Left Forward motor + holder2  Link-->
+  <link name="lf_wheel">
+
+        <!--Visual of the Link-->
+        <visual>
+            <!-- Setting up the origin of the link -->
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            
+            <!-- Giving geometry to the link -->
+            <geometry>
+                <cylinder length="${wheel_height}" radius="${wheel_radius}"/>
+            </geometry>
+
+            <!--Giving the material to be used in rviz-->
+             <material name="Blue"/>
+        </visual>
+        
+        <!-- Collision Model of the link -->
+        <collision> 
+            <!-- Origin of the collision model -->
+            <!-- Setting up the origin of the link -->
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            
+            <!-- Giving geometry to the collision model of the link -->
+            <geometry>
+                <cylinder length="${wheel_height}" radius="${wheel_radius}"/>
+            </geometry> 
+        </collision>
+        
+        <!-- Inertia of the base_link -->
+        <xacro:cylinder_inertial_with_origin radius="${wheel_radius}" length="${wheel_height}" mass="${wheel_mass}" x_o="0" y_o="0" z_o="0" r_o="0" p_o="0" yr_o="0" />
+  </link>
+
+
+</robot>

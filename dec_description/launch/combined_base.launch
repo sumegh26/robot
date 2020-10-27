@@ -1,0 +1,17 @@
+<launch>
+<node pkg="rosserial_python" name="arduino" type="serial_node.py" args="/dev/ttyACM0 _baud:=115200" />
+<node pkg="teleop_twist_keyboard" name="teleop" type="teleop_twist_keyboard.py" output="screen" launch-prefix="xterm -e"/> 
+<node pkg="dec_description" name="odometry_node" type="odometry_newApproach"/>
+<node pkg="dec_description" name="kinect_tf" type="kinectframe"/>
+<node pkg="dec_description" name="imu_tf" type="imu_static"/>
+<node pkg="robot_localization" name="ekf_filter" type="ekf_localization_node">
+<rosparam command="load" file="$(find dec_description)/config/ekf_localization.yaml"/>
+</node>
+<node pkg="gmapping" name="gmapping" type="slam_gmapping" args="scan:=scan"/> 
+<include file="$(find dec_description)/launch/mobile_manupulator.launch">
+</include>
+
+<!--<include file="$(find dec_description)/launch/kinect_launcher.launch">
+</include> -->
+
+</launch>

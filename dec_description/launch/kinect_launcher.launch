@@ -1,0 +1,6 @@
+<launch>
+<node pkg="depthimage_to_laserscan" name="kinect_depth" type="depthimage_to_laserscan" args="image:=/camera/depth_registered/image_raw" output="screen" launch-prefix="xterm -e"/> 
+<include file="$(find openni_launch)/launch/openni.launch">
+ <param name="depth_registration" value="true"/>
+</include>
+</launch>
